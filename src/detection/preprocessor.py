@@ -26,3 +26,35 @@ class Preprocessor:
         enhanced = cv2.equalizeHist(gray)
 
         return enhanced
+
+    def denoise(self, image: np.ndarray) -> np.ndarray:
+        if image.dtype != np.uint8:
+            img = (image * 255).astype(np.uint8)
+        else:
+            img = image.copy()
+        return cv2.GaussianBlur(img, (5, 5), 0)
+
+    def sharpen(self, image: np.ndarray) -> np.ndarray:
+        if image.dtype != np.uint8:
+            img = (image * 255).astype(np.uint8)
+        else:
+            img = image.copy()
+        blurred = cv2.GaussianBlur(img, (0, 0), 3)
+        return cv2.addWeighted(img, 1.5, blurred, -0.5, 0)
+
+    def adjust_contrast(self, image: np.ndarray, factor: float = 2.0) -> np.ndarray:
+        if image.dtype != np.uint8:
+            img = (image * 255).astype(np.uint8)
+        else:
+            img = image.copy()
+
+        if len(img.shape) == 3:
+            lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
+            l, a, b = cv2.split(lab)
+            clahe = cv2.createCLAHE(clipLimit=factor, tileGridSize=(8, 8))
+            l = clahe.apply(l)
+            lab = cv2.merge([l, a, b])
+            return cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+        else:
+            clahe = cv2.createCLAHE(clipLimit=factor, tileGridSize=(8, 8))
+            return clahe.apply(img)
